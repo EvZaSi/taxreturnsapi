@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    DynamoDBTable:
+        Type: "AWS::DynamoDB::Table"
+        Properties:
+            AttributeDefinitions: 
+              - 
+                AttributeName: "ID"
+                AttributeType: "S"
+            TableName: "US_Income_Tax_Returns"
+            KeySchema: 
+              - 
+                AttributeName: "ID"
+                KeyType: "HASH"
+            ProvisionedThroughput: 
+                ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+
+    LambdaFunction:
+        Type: "AWS::Lambda::Function"
+        Properties:
+            Description: ""
+            FunctionName: "GetNumberOfReturnsForZipCode"
+            Handler: "index.handler"
+            Architectures: 
+              - "x86_64"
+            Code: 
+                S3Bucket: !Sub "awslambda-${AWS::Region}-tasks"
+                S3Key: "/snapshots/477667870191/GetNumberOfReturnsForZipCode-2c5fabc6-aebc-471f-be4e-86a686a4b899"
+                S3ObjectVersion: "i72edbYGPw_FfqVhst4_HK9eXJz4TKac"
+            MemorySize: 128
+            Role: !GetAtt IAMRole.Arn
+            Runtime: "nodejs16.x"
+            Timeout: 3
+            TracingConfig: 
+                Mode: "PassThrough"
+            EphemeralStorage: 
+                Size: 512
+
+    S3Bucket:
+        Type: "AWS::S3::Bucket"
+        Properties:
+            BucketName: "dynamodbimportbucket12312312312315512323"
+            BucketEncryption: 
+                ServerSideEncryptionConfiguration: 
+                  - 
+                    ServerSideEncryptionByDefault: 
+                        SSEAlgorithm: "AES256"
+                    BucketKeyEnabled: true
+
+    ApiGatewayRestApi:
+        Type: "AWS::ApiGateway::RestApi"
+        Properties:
+            Name: "TaxReturnsByZipCode"
+            ApiKeySourceType: "HEADER"
+            EndpointConfiguration: 
+                Types: 
+                  - "EDGE"
+
+    IAMRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Path: "/"
+            RoleName: "IncomeTaxReturnsLambda"
+            AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+            MaxSessionDuration: 3600
+            ManagedPolicyArns: 
+              - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+            Description: "Allows Lambda functions to call AWS services on your behalf."
+
+    IAMPolicy:
+        Type: "AWS::IAM::Policy"
+        Properties:
+            PolicyDocument: !Sub |
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "VisualEditor0",
+                            "Effect": "Allow",
+                            "Action": [
+                                "dynamodb:BatchGetItem",
+                                "dynamodb:GetItem"
+                            ],
+                            "Resource": "arn:aws:dynamodb:${AWS::Region}:477667870191:table/${DynamoDBTable}"
+                        }
+                    ]
+                }
+            Roles: 
+              - !Ref IAMRole
+            PolicyName: "DynamoDBWriteAccess"
+
+    LambdaPermission:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !GetAtt LambdaFunction.Arn
+            Principal: "apigateway.amazonaws.com"
+            SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:477667870191:${ApiGatewayRestApi}/*/GET/taxreturnszipcode"
+
+    LambdaPermission2:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !GetAtt LambdaFunction.Arn
+            Principal: "apigateway.amazonaws.com"
+            SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:477667870191:${ApiGatewayRestApi}/*/GET/taxreturnszipcode"
+
+    LambdaPermission3:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !GetAtt LambdaFunction.Arn
+            Principal: "apigateway.amazonaws.com"
+            SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:477667870191:${ApiGatewayRestApi}/*/GET/taxreturnszipcode"
+
